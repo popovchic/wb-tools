@@ -7,6 +7,7 @@ from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 
 from .config import config
+from .render_api import router as render_router
 from .template_api import router as template_router
 from .tasks import (
     complete_task,
@@ -30,6 +31,7 @@ worker_token_header = APIKeyHeader(name="X-Worker-Token", auto_error=False)
 
 
 app.include_router(template_router)
+app.include_router(render_router)
 
 
 @app.on_event("startup")

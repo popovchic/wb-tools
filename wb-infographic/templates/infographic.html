@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 900px;
+    height: 1200px;
+    overflow: hidden;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .container {
+    position: relative;
+    width: 900px;
+    height: 1200px;
+    background-color: {{ layout.background_color }};
+    {% if layout.background_gradient %}
+      {% if layout.background_gradient is mapping %}
+        background: linear-gradient({{ layout.background_gradient.direction }}, {{ layout.background_gradient.from }}, {{ layout.background_gradient.to }});
+      {% else %}
+        background: {{ layout.background_gradient }};
+      {% endif %}
+    {% endif %}
+    overflow: hidden;
+  }
+
+  /* Фото товара */
+  .product-image {
+    position: absolute;
+    {% set img_width = layout.product_image.width_percent %}
+    width: {{ img_width }}%;
+    {% if layout.product_image.position == 'left' %}
+      left: {{ layout.product_image.offset_x_percent }}%;
+      top: 50%;
+      transform: translateY(-50%) translateY({{ layout.product_image.offset_y_percent }}%);
+    {% elif layout.product_image.position == 'right' %}
+      right: {{ layout.product_image.offset_x_percent }}%;
+      top: 50%;
+      transform: translateY(-50%) translateY({{ layout.product_image.offset_y_percent }}%);
+    {% elif layout.product_image.position == 'top' %}
+      top: {{ layout.product_image.offset_y_percent }}%;
+      left: 50%;
+      transform: translateX(-50%) translateX({{ layout.product_image.offset_x_percent }}%);
+    {% elif layout.product_image.position == 'bottom' %}
+      bottom: {{ layout.product_image.offset_y_percent | abs }}%;
+      left: 50%;
+      transform: translateX(-50%) translateX({{ layout.product_image.offset_x_percent }}%);
+    {% else %}
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translate({{ layout.product_image.offset_x_percent }}%, {{ layout.product_image.offset_y_percent }}%);
+    {% endif %}
+  }
+
+  .product-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Заголовок */
+  .title-block {
+    position: absolute;
+    {% if title.position == 'top-left' %}
+      top: 40px; left: 40px;
+    {% elif title.position == 'top-right' %}
+      top: 40px; right: 40px; text-align: right;
+    {% else %}
+      top: 40px; left: 50%; transform: translateX(-50%); text-align: center;
+    {% endif %}
+    width: {{ title.max_width_percent }}%;
+    z-index: 10;
+  }
+
+  .title-block h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: {{ title.font_size }}px;
+    font-weight: {{ title.font_weight }};
+    color: {{ title.color }};
+    line-height: 1.2;
+  }
+
+  /* Буллеты */
+  .bullets-block {
+    position: absolute;
+    z-index: 10;
+    {% if bullets_position == 'left' %}
+      left: 40px; top: 50%; transform: translateY(-50%);
+      width: 40%;
+    {% elif bullets_position == 'right' %}
+      right: 40px; top: 50%; transform: translateY(-50%);
+      width: 40%;
+    {% else %}
+      bottom: 80px; left: 40px; right: 40px;
+    {% endif %}
+  }
+
+  .bullet-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .bullet-icon {
+    font-size: {{ bullets[0].font_size + 4 }}px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .bullet-text {
+    font-size: {{ bullets[0].font_size }}px;
+    color: {{ bullets[0].color }};
+    line-height: 1.3;
+  }
+
+  /* Бейдж */
+  {% if badge %}
+  .badge {
+    position: absolute;
+    z-index: 20;
+    {% if badge.position == 'top-left' %}
+      top: 30px; left: 30px;
+    {% else %}
+      top: 30px; right: 30px;
+    {% endif %}
+    background-color: {{ badge.background_color }};
+    color: {{ badge.text_color }};
+    font-family: 'Montserrat', sans-serif;
+    font-size: {{ badge.font_size if badge.font_size else 14 }}px;
+    font-weight: bold;
+    padding: 8px 16px;
+    {% if badge.shape == 'circle' %}
+      border-radius: 50%;
+      width: 70px; height: 70px;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+    {% elif badge.shape == 'rounded' %}
+      border-radius: 20px;
+    {% else %}
+      border-radius: 4px;
+    {% endif %}
+  }
+  {% endif %}
+
+  /* Футер */
+  {% if footer %}
+  .footer-block {
+    position: absolute;
+    bottom: 30px;
+    left: 40px; right: 40px;
+    text-align: center;
+    z-index: 10;
+    font-size: {{ footer.font_size }}px;
+    color: {{ footer.color }};
+  }
+  {% endif %}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Фото товара -->
+  <div class="product-image">
+    <img src="{{ product_image_src }}" alt="product">
+  </div>
+
+  <!-- Заголовок -->
+  <div class="title-block">
+    <h1>{{ texts.title }}</h1>
+  </div>
+
+  <!-- Буллеты -->
+  {% if texts.bullets %}
+  <div class="bullets-block">
+    {% for bullet in bullets %}
+    {% set idx = loop.index %}
+    {% set text = texts.bullets[idx - 1] if idx <= texts.bullets|length else '' %}
+    {% if text %}
+    <div class="bullet-item">
+      {% if bullet.icon %}
+      <span class="bullet-icon">{{ bullet.icon }}</span>
+      {% endif %}
+      <span class="bullet-text" style="color: {{ bullet.color }}; font-size: {{ bullet.font_size }}px;">{{ text }}</span>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Бейдж -->
+  {% if badge %}
+  <div class="badge">{{ texts.badge }}</div>
+  {% endif %}
+
+  <!-- Футер -->
+  {% if footer %}
+  <div class="footer-block">{{ texts.footer }}</div>
+  {% endif %}
+
+</div>
+</body>
+</html>
