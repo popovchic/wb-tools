@@ -1,8 +1,5 @@
 import base64
-import io
 from pathlib import Path
-
-import PIL.Image as PILImage
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -25,13 +22,13 @@ def _image_to_data_uri(image_path: str) -> str:
     return f"data:{mime};base64,{b64}"
 
 
-def render_infographic(
+def render_html_template(
     template_json: dict,
     product_image_path: str,
     user_texts: dict,
-) -> bytes:
+) -> str:
     """
-    Рендерит инфографику через weasyprint.
+    Генерирует HTML-строку с встроенным фото товара (base64 data URI).
 
     user_texts = {
         "title": "...",
@@ -40,9 +37,8 @@ def render_infographic(
         "footer": "...",  # опционально
     }
 
-    Возвращает PNG bytes.
+    Возвращает HTML строку (самодостаточный файл без внешних зависимостей по изображениям).
     """
-    # Встраиваем фото товара как data URI чтобы weasyprint не делал HTTP запросы
     product_image_src = _image_to_data_uri(product_image_path)
 
     tmpl = jinja_env.get_template("infographic.html")
@@ -56,21 +52,4 @@ def render_infographic(
         product_image_src=product_image_src,
         texts=user_texts,
     )
-
-    from weasyprint import CSS, HTML
-
-    pdf_bytes = (
-        HTML(string=html)
-        .write_pdf(
-            stylesheets=[
-                CSS(string="@page { size: 900px 1200px; margin: 0; }")
-            ]
-        )
-    )
-
-    # Конвертируем PDF → PNG через Pillow + pdf2image
-    from pdf2image import convert_from_bytes
-    images = convert_from_bytes(pdf_bytes, dpi=96, size=(900, 1200))
-    buf = io.BytesIO()
-    images[0].save(buf, format="PNG")
-    return buf.getvalue()
+    return html

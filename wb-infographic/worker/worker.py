@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""P40 Worker — поллит VPS, забирает задачи rembg, возвращает результат."""
+"""Windows Worker — поллит VPS, забирает задачи rembg и render, возвращает результат."""
 
+import asyncio
 import io
 import logging
 import time
@@ -30,6 +31,19 @@ def process_rembg(image_bytes: bytes) -> bytes:
     return remove(image_bytes)
 
 
+async def render_html_to_png(html_bytes: bytes) -> bytes:
+    """Принимает HTML как bytes, возвращает PNG как bytes через Playwright."""
+    from playwright.async_api import async_playwright
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page(viewport={"width": 900, "height": 1200})
+        html_str = html_bytes.decode("utf-8")
+        await page.set_content(html_str, wait_until="networkidle")
+        png = await page.screenshot(type="png", full_page=False)
+        await browser.close()
+        return png
+
+
 def run() -> None:
     log.info("Worker started. VPS: %s", VPS_URL)
     while True:
@@ -49,30 +63,34 @@ def run() -> None:
             dl.raise_for_status()
             input_bytes = dl.content
 
-            if task_type == "rembg":
-                try:
+            try:
+                if task_type == "rembg":
                     result_bytes = process_rembg(input_bytes)
-                    requests.post(
-                        f"{VPS_URL}/api/tasks/{task_id}/result",
-                        headers=HEADERS,
-                        files={"file": ("result.png", io.BytesIO(result_bytes), "image/png")},
-                        timeout=30,
-                    ).raise_for_status()
-                    log.info("Task %s done", task_id)
-                except Exception as exc:
-                    log.error("Task %s failed: %s", task_id, exc)
-                    requests.post(
-                        f"{VPS_URL}/api/tasks/{task_id}/error",
-                        headers=HEADERS,
-                        params={"error": str(exc)},
-                        timeout=10,
-                    )
-            else:
-                log.warning("Unknown task type: %s", task_type)
+                    filename = "result.png"
+                    mime = "image/png"
+
+                elif task_type == "render":
+                    result_bytes = asyncio.run(render_html_to_png(input_bytes))
+                    filename = "result.png"
+                    mime = "image/png"
+
+                else:
+                    raise ValueError(f"Unknown task type: {task_type}")
+
+                requests.post(
+                    f"{VPS_URL}/api/tasks/{task_id}/result",
+                    headers=HEADERS,
+                    files={"file": (filename, io.BytesIO(result_bytes), mime)},
+                    timeout=30,
+                ).raise_for_status()
+                log.info("Task %s done", task_id)
+
+            except Exception as exc:
+                log.error("Task %s failed: %s", task_id, exc)
                 requests.post(
                     f"{VPS_URL}/api/tasks/{task_id}/error",
                     headers=HEADERS,
-                    params={"error": f"Unknown task type: {task_type}"},
+                    params={"error": str(exc)},
                     timeout=10,
                 )
 

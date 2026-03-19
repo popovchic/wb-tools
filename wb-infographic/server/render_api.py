@@ -5,8 +5,8 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 
 from .config import config
-from .renderer import render_infographic
-from .tasks import create_task, wait_for_task
+from .renderer import render_html_template
+from .tasks import create_render_task, create_task, wait_for_task
 
 router = APIRouter(prefix="/api/infographic", tags=["infographic"])
 
@@ -58,10 +58,14 @@ async def create_infographic(
         "footer": footer,
     }
 
-    # Рендерим
-    try:
-        png_bytes = render_infographic(tmpl, image_path, user_texts)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Render error: {e}")
+    # Генерируем HTML (фото встроено как base64)
+    html_content = render_html_template(tmpl, image_path, user_texts)
 
+    # Отправляем на рендер worker'у
+    render_task_id = create_render_task(html_content)
+    render_result = await wait_for_task(render_task_id, timeout=30)
+    if render_result is None:
+        raise HTTPException(status_code=503, detail="Render error: worker timeout or failure")
+
+    png_bytes = Path(render_result).read_bytes()
     return Response(content=png_bytes, media_type="image/png")

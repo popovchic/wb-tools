@@ -84,6 +84,15 @@ def get_task(task_id: str) -> dict | None:
         return dict(row) if row else None
 
 
+def create_render_task(html_content: str) -> str:
+    """Сохраняет HTML в файл, создаёт задачу type=render."""
+    task_id = str(uuid.uuid4())
+    html_path = DB_PATH.parent / "uploads" / f"{task_id}.html"
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+    html_path.write_text(html_content, encoding="utf-8")
+    return create_task("render", str(html_path))
+
+
 async def wait_for_task(task_id: str, timeout: float = 30.0) -> str | None:
     """Поллит SQLite каждые 0.5 сек. Возвращает output_path или None при ошибке/таймауте."""
     deadline = time.time() + timeout
