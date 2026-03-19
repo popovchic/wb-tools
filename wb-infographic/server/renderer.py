@@ -2,6 +2,8 @@ import base64
 import io
 from pathlib import Path
 
+import PIL.Image as PILImage
+
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
@@ -57,12 +59,18 @@ def render_infographic(
 
     from weasyprint import CSS, HTML
 
-    png_bytes = (
+    pdf_bytes = (
         HTML(string=html)
-        .write_png(
+        .write_pdf(
             stylesheets=[
                 CSS(string="@page { size: 900px 1200px; margin: 0; }")
             ]
         )
     )
-    return png_bytes
+
+    # Конвертируем PDF → PNG через Pillow + pdf2image
+    from pdf2image import convert_from_bytes
+    images = convert_from_bytes(pdf_bytes, dpi=96, size=(900, 1200))
+    buf = io.BytesIO()
+    images[0].save(buf, format="PNG")
+    return buf.getvalue()
