@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# Data (uploads, results, database)
+data/uploads/*
+data/results/*
+data/tasks.db
+!data/uploads/.gitkeep
+!data/results/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Playwright
+.playwright/
+
+# OS
+.DS_Store
+Thumbs.db
