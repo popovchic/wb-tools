@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WB Card Maker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">WB Card Maker</div>
+    <div class="tagline">Создай инфографику для Wildberries за 2 минуты</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ШАГ 1 -->
+  <section id="step1" class="step active">
+    <div class="step-header">
+      <span class="step-num">1</span>
+      <span class="step-title">Шаблон</span>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="new">Создать новый</button>
+      <button class="tab" data-tab="load">Загрузить готовый</button>
+    </div>
+
+    <!-- Таб: создать новый -->
+    <div id="tab-new" class="tab-content active">
+      <div class="dropzone" id="dz-sample">
+        <div class="dz-icon">🖼</div>
+        <div class="dz-label">Перетащи образец инфографики конкурента</div>
+        <div class="dz-hint">или кликни для выбора файла</div>
+        <input type="file" id="input-sample" accept="image/*" hidden>
+      </div>
+      <div id="sample-preview-wrap" class="preview-wrap hidden">
+        <img id="sample-preview" src="" alt="образец">
+      </div>
+
+      <label class="field-label">Что изменить? <span class="optional">(опционально)</span></label>
+      <textarea id="instructions-new" class="textarea" placeholder="Например: сделай тёмный фон, текст справа"></textarea>
+
+      <button id="btn-create-template" class="btn btn-primary" disabled>Создать шаблон</button>
+    </div>
+
+    <!-- Таб: загрузить готовый -->
+    <div id="tab-load" class="tab-content">
+      <div class="dropzone" id="dz-template">
+        <div class="dz-icon">📂</div>
+        <div class="dz-label">Перетащи файл шаблона (.template)</div>
+        <div class="dz-hint">или кликни для выбора файла</div>
+        <input type="file" id="input-template" accept=".template,application/json" hidden>
+      </div>
+
+      <label class="field-label">Подправить шаблон? <span class="optional">(опционально)</span></label>
+      <textarea id="instructions-modify" class="textarea" placeholder="Например: поменяй фон на тёмно-синий"></textarea>
+      <button id="btn-modify-template" class="btn btn-secondary" disabled>Применить правки</button>
+    </div>
+
+    <!-- Превью шаблона -->
+    <div id="template-preview-wrap" class="hidden">
+      <div class="section-label">Превью шаблона</div>
+      <div id="template-preview" class="template-preview"></div>
+      <div class="template-actions">
+        <button id="btn-save-template" class="btn btn-secondary">Сохранить шаблон</button>
+        <button id="btn-to-step2" class="btn btn-primary">Далее →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ШАГ 2 -->
+  <section id="step2" class="step">
+    <div class="step-header">
+      <span class="step-num">2</span>
+      <span class="step-title">Создай инфографику</span>
+      <button id="btn-back" class="btn-link">← Новый шаблон</button>
+    </div>
+
+    <div class="step2-layout">
+      <div class="step2-left">
+        <div class="dropzone small" id="dz-product">
+          <div class="dz-icon">📷</div>
+          <div class="dz-label">Фото товара</div>
+          <div class="dz-hint">PNG, JPG</div>
+          <input type="file" id="input-product" accept="image/*" hidden>
+        </div>
+        <div id="product-preview-wrap" class="preview-wrap hidden">
+          <img id="product-preview" src="" alt="товар">
+        </div>
+        <label class="checkbox-label">
+          <input type="checkbox" id="remove-bg" checked>
+          Убрать фон
+        </label>
+      </div>
+
+      <div class="step2-right">
+        <label class="field-label">Заголовок</label>
+        <input type="text" id="input-title" class="input" placeholder="Название товара">
+
+        <label class="field-label">Преимущества</label>
+        <div id="bullets-list">
+          <input type="text" class="input bullet-input" placeholder="Преимущество 1">
+          <input type="text" class="input bullet-input" placeholder="Преимущество 2">
+          <input type="text" class="input bullet-input" placeholder="Преимущество 3">
+        </div>
+        <button id="btn-add-bullet" class="btn-link">+ добавить</button>
+
+        <label class="field-label">Бейдж <span class="optional">(опционально)</span></label>
+        <input type="text" id="input-badge" class="input" placeholder="-20%">
+
+        <label class="field-label">Футер <span class="optional">(опционально)</span></label>
+        <input type="text" id="input-footer" class="input" placeholder="ООО Ромашка">
+
+        <button id="btn-create-infographic" class="btn btn-primary" disabled>Создать инфографику</button>
+      </div>
+    </div>
+
+    <!-- Лоадер -->
+    <div id="loader" class="hidden">
+      <div class="spinner"></div>
+      <div id="loader-text">Создаю инфографику...</div>
+    </div>
+
+    <!-- Результат -->
+    <div id="result-wrap" class="hidden">
+      <div class="section-label">Готово!</div>
+      <div class="result-layout">
+        <img id="result-img" src="" alt="инфографика" class="result-img">
+        <div class="result-actions">
+          <button id="btn-download" class="btn btn-primary">Скачать PNG</button>
+          <button id="btn-create-more" class="btn btn-secondary">Создать ещё</button>
+          <button id="btn-new-template" class="btn-link">← Новый шаблон</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="overlay" class="hidden">
+  <div class="overlay-box">
+    <div class="spinner"></div>
+    <div id="overlay-text">Анализирую образец...</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
